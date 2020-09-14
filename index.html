@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Spyfall Team Chooser</title>
@@ -7,19 +8,75 @@
         .pressed {
             background-color: yellowgreen;
         }
+
+        table,
+        thead,
+        th {
+            border: 1px solid black;
+        }
+
+        .red {
+            background-color: lightcoral;
+        }
+
+        .blue {
+            background-color: lightskyblue;
+        }
     </style>
 </head>
+
 <body>
     <h1>Spyfall Team Chooser</h1>
     <div id="people"></div>
-    <div><button onclick="randomize()">Randomize</button></div>
+    <div><button onclick="makeTeams()">Make Teams</button></div>
+    <div>
+        <table id="table">
+            <thead>
+                <th class="red">Red Team</th>
+                <th class="blue">Blue Team</th>
+            </thead>
+        </table>
+    </div>
 </body>
 <script>
-    function randomize() {
-        console.log(people)
+    function shuffle(a) {
+        for (let i = a.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
     }
+
+    function makeTeams() {
+        var table = document.getElementById("table");
+
+        var selectedPeople = []
+        for (const p in people) {
+            if (people[p])
+                selectedPeople.push(p)
+        }
+        shuffle(selectedPeople);
+
+        teamSize = selectedPeople.length / 2;
     
-    const peopleNames = ["a", "b", "c"];
+        if (teamSize != Math.floor(teamSize))
+        {
+            teamSize = Math.floor(teamSize);
+
+            //if there is an even number we don't always want the red team to be bigger
+            if (Math.random() > 0.5) {
+                teamSize += 1;
+            }
+        }
+
+        const redTeam = selectedPeople.slice(0,teamSize)
+        const blueTeam = selectedPeople.slice(teamSize, selectedPeople.length)
+
+        console.log(redTeam)
+        console.log(blueTeam)
+    }
+
+    const peopleNames = ["a", "b", "c", "d", "e", "f", "g", "h", "i"];
     let people = {};
 
     let peopleDiv = document.getElementById("people");
@@ -28,7 +85,7 @@
         people[person] = false
         let button = document.createElement("button");
         button.innerText = person;
-        button.onclick = function() {
+        button.onclick = function () {
             this.classList.toggle("pressed");
             people[person] = !people[person];
         };
@@ -36,4 +93,5 @@
     }
 
 </script>
+
 </html>
