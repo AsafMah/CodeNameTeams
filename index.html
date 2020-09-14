@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Spyfall Team Chooser</title>
+    <style>
+        .pressed {
+            background-color: yellowgreen;
+        }
+    </style>
+</head>
+<body>
+    <h1>Spyfall Team Chooser</h1>
+    <div id="people"></div>
+    <div><button onclick="randomize()">Randomize</button></div>
+</body>
+<script>
+    function randomize() {
+        console.log(people)
+    }
+    
+    const peopleNames = ["a", "b", "c"];
+    let people = {};
+
+    let peopleDiv = document.getElementById("people");
+
+    for (const person of peopleNames) {
+        people[person] = false
+        let button = document.createElement("button");
+        button.innerText = person;
+        button.onclick = function() {
+            this.classList.toggle("pressed");
+            people[person] = !people[person];
+        };
+        peopleDiv.appendChild(button);
+    }
+
+</script>
+</html>
