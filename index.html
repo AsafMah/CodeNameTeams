@@ -5,6 +5,9 @@
     <meta charset="UTF-8">
     <title>Spyfall Team Chooser</title>
     <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+        }
         .pressed {
             background-color: yellowgreen;
         }
@@ -23,6 +26,10 @@
         .blue {
             background-color: lightskyblue;
         }
+
+        .spymaster {
+            font-weight: bold;
+        }
     </style>
 </head>
 
@@ -39,8 +46,43 @@
             <tbody></tbody>
         </table>
     </div>
+    <button onclick="updateNames()">Update Names</button>
+    <div>
+        <textarea id="names" rows=30>
+AmitSh
+Ariel
+Asaf
+Boaz
+Keren
+Lea
+Nir
+Ohad
+Ran
+Vladik
+Yihezkel
+Yochai
+        </textarea>
+    </div>
 </body>
 <script>
+    let people = {};
+    function updateNames() {
+        const peopleNames = document.getElementById("names").value.trim().split("\n");
+        const peopleDiv = document.getElementById("people");
+        peopleDiv.innerHTML = "";
+        people = {};
+
+        for (const person of peopleNames) {
+            people[person] = false
+            let button = document.createElement("button");
+            button.innerText = person;
+            button.onclick = function () {
+                this.classList.toggle("pressed");
+                people[person] = !people[person];
+            };
+            peopleDiv.appendChild(button);
+        }
+    }
     function shuffle(a) {
         for (let i = a.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -58,9 +100,8 @@
         shuffle(selectedPeople);
 
         teamSize = selectedPeople.length / 2;
-    
-        if (teamSize != Math.floor(teamSize))
-        {
+
+        if (teamSize != Math.floor(teamSize)) {
             teamSize = Math.floor(teamSize);
 
             //if there is an even number we don't always want the red team to be bigger
@@ -69,12 +110,8 @@
             }
         }
 
-        const redTeam = selectedPeople.slice(0,teamSize)
+        const redTeam = selectedPeople.slice(0, teamSize)
         const blueTeam = selectedPeople.slice(teamSize, selectedPeople.length)
-
-        console.log(redTeam)
-        console.log(blueTeam)
-
         const body = document.createElement("tbody");
 
         for (let i = 0; i < selectedPeople.length / 2; i++) {
@@ -85,28 +122,22 @@
             const blueCell = row.insertCell(1);
             blueCell.innerText = blueTeam[i] ?? "";
             blueCell.classList.add("blue");
+
+            if (i == 0) {
+                const makeSpymaster = (t) => {
+                    t.innerText += " - Spymaster";
+                    t.classList.add("spymaster");
+                }
+                makeSpymaster(redCell);
+                makeSpymaster(blueCell);
+            }
         }
 
         var table = document.getElementById("table");
         table.replaceChild(body, table.querySelector("tbody"));
     }
 
-    const peopleNames = ["a", "b", "c", "d", "e", "f", "g", "h", "i"];
-    let people = {};
-
-    let peopleDiv = document.getElementById("people");
-
-    for (const person of peopleNames) {
-        people[person] = false
-        let button = document.createElement("button");
-        button.innerText = person;
-        button.onclick = function () {
-            this.classList.toggle("pressed");
-            people[person] = !people[person];
-        };
-        peopleDiv.appendChild(button);
-    }
-
+    updateNames(); 
 </script>
 
 </html>
