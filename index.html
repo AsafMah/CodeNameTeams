@@ -13,6 +13,7 @@
         thead,
         th {
             border: 1px solid black;
+            text-align: center;
         }
 
         .red {
@@ -35,6 +36,7 @@
                 <th class="red">Red Team</th>
                 <th class="blue">Blue Team</th>
             </thead>
+            <tbody></tbody>
         </table>
     </div>
 </body>
@@ -48,8 +50,6 @@
     }
 
     function makeTeams() {
-        var table = document.getElementById("table");
-
         var selectedPeople = []
         for (const p in people) {
             if (people[p])
@@ -74,6 +74,21 @@
 
         console.log(redTeam)
         console.log(blueTeam)
+
+        const body = document.createElement("tbody");
+
+        for (let i = 0; i < selectedPeople.length / 2; i++) {
+            const row = body.insertRow(i);
+            const redCell = row.insertCell(0);
+            redCell.innerText = redTeam[i] ?? "";
+            redCell.classList.add("red");
+            const blueCell = row.insertCell(1);
+            blueCell.innerText = blueTeam[i] ?? "";
+            blueCell.classList.add("blue");
+        }
+
+        var table = document.getElementById("table");
+        table.replaceChild(body, table.querySelector("tbody"));
     }
 
     const peopleNames = ["a", "b", "c", "d", "e", "f", "g", "h", "i"];
