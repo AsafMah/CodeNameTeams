@@ -42,6 +42,13 @@
         .spymaster {
             font-weight: bold;
         }
+
+        .wrapper {
+            display: inline-block;
+            border: 1px black solid;
+            margin: 3px;
+            padding: 3px;
+        }
     </style>
 </head>
 
@@ -85,14 +92,33 @@ Yochai
         people = {};
 
         for (const person of peopleNames) {
-            people[person] = false
-            let button = document.createElement("button");
-            button.innerText = person;
-            button.onclick = function () {
+            people[person] = { selected: false, canBeSpymaster: true};
+
+            let wrapper = document.createElement("div");
+            wrapper.classList.add("wrapper");
+
+            let canBeSpymaster = document.createElement("input");
+            canBeSpymaster.type = "checkbox";
+            canBeSpymaster.checked = true;
+            canBeSpymaster.disabled = true;
+            canBeSpymaster.onchange = function(){
+                people[person].canBeSpymaster = this.checked;
+            }
+            let canBelabel = document.createElement("canBelabel");
+            canBelabel.innerText = "SM Pool"
+
+            let nameButton = document.createElement("button");
+            nameButton.innerText = person;
+            nameButton.onclick = function () {
                 this.classList.toggle("pressed");
-                people[person] = !people[person];
+                people[person].selected = !people[person].selected;
+                canBeSpymaster.disabled = !people[person].selected;
             };
-            peopleDiv.appendChild(button);
+
+            wrapper.appendChild(nameButton);
+            wrapper.appendChild(canBeSpymaster);
+            wrapper.appendChild(canBelabel);
+            peopleDiv.appendChild(wrapper);
         }
     }
     function shuffle(a) {
@@ -104,12 +130,33 @@ Yochai
     }
 
     function makeTeams() {
-        var selectedPeople = []
+        var selectedPeopleRaw = []
         for (const p in people) {
-            if (people[p])
-                selectedPeople.push(p)
+            if (people[p].selected)
+                selectedPeopleRaw.push(p)
         }
-        shuffle(selectedPeople);
+        shuffle(selectedPeopleRaw);
+
+        const selectedPeople = [];
+        let redTeam = [];
+        let blueTeam = [];
+        for (const person of selectedPeopleRaw) {
+            if (people[person].canBeSpymaster)
+            {
+                if (redTeam.length == 0) 
+                {
+                    redTeam.push(person);
+                    continue;
+                }
+                else if (blueTeam.length == 0)
+                {
+                    blueTeam.push(person);
+                    continue;
+                }
+            }
+
+            selectedPeople.push(person);
+        }
 
         teamSize = selectedPeople.length / 2;
 
@@ -122,11 +169,11 @@ Yochai
             }
         }
 
-        const redTeam = selectedPeople.slice(0, teamSize)
-        const blueTeam = selectedPeople.slice(teamSize, selectedPeople.length)
+        redTeam = redTeam.concat(selectedPeople.slice(0, teamSize));
+        blueTeam = blueTeam.concat(selectedPeople.slice(teamSize, selectedPeople.length));
         const body = document.createElement("tbody");
 
-        for (let i = 0; i < selectedPeople.length / 2; i++) {
+        for (let i = 0; i < selectedPeopleRaw.length / 2; i++) {
             const row = body.insertRow(i);
             const redCell = row.insertCell(0);
             redCell.innerText = redTeam[i] ?? "";
