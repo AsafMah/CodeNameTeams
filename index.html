@@ -150,6 +150,7 @@ Yochai`,
             },
             shuffled() {
                 let shuffled = this.seed.shuffle(this.selectedNames);
+                this.randomFavorRed = this.seed.bool();
                 return shuffled.sort((a,b) => b.canBeSpymaster - a.canBeSpymaster);
             },
             redTeam() {
