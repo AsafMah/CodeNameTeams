@@ -50,25 +50,57 @@
             padding: 3px;
         }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.0.1/vue.global.prod.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chance/1.1.7/chance.min.js"></script>
 </head>
 
 <body>
+    <div id=app>
     <h1>Codenames Team Chooser</h1>
-    <div id="people"></div>
-    <div><button onclick="makeTeams()">Make Teams</button></div>
+    <div v-for="person in people" class="wrapper">
+            <button @click="person.selected = !person.selected"
+                :class="{pressed: person.selected}">{{person.name}}</button>
+            <input :name="person.name + 'isSm'" type="checkbox" v-model="person.canBeSpymaster"
+                :disabled="!person.selected">
+            <label :for="person.name + 'isSm'">SM Pool</label>
+    </div>
+    <div>
+        Favor:
+        <input type="radio" value="Random" v-model="favor" />
+        <label for="Random">Random</label>
+        <input type="radio" value="Red" v-model="favor" />
+        <label for="Red">Red</label>
+        <input type="radio" value="Blue" v-model="favor" />
+        <label for="Blue">Blue</label>
+    </div>
+    <div><button @click="reseed">Reshuffle Teams</button></div>
     <div>
         <table id="table">
             <thead>
                 <th class="red">Red Team</th>
                 <th class="blue">Blue Team</th>
             </thead>
-            <tbody></tbody>
+            <tbody>
+                <tr v-for="zip in zippedTeams">
+                    <td class=red :class="{spymaster: zip[0] == redSm}">{{zip[0].name}}<span v-if="zip[0] == redSm"> - SpyMaster</span></td>
+                    <td class=blue :class="{spymaster: zip[1] == blueSm}">{{zip[1].name}}<span v-if="zip[1] == blueSm"> - SpyMaster</span></td>
+                </tr>
+            </tbody>
         </table>
     </div>
-    <button onclick="updateNames()">Update Names</button>
     <div>
-        <textarea id="names" rows=30>
-AmitSh
+        <textarea v-model="names" rows=30>
+
+        </textarea>
+    </div>
+</div>
+</body>
+
+<script>
+    const HelloVueApp = {
+        data() {
+            return {
+                names: `AmitSh
 Ariel
 Asaf
 Boaz
@@ -79,124 +111,75 @@ Ohad
 Ran
 Vladik
 Yihezkel
-Yochai
-        </textarea>
-    </div>
-</body>
-<script>
-    let people = {};
-    function updateNames() {
-        const peopleNames = document.getElementById("names").value.trim().split("\n");
-        const peopleDiv = document.getElementById("people");
-        peopleDiv.innerHTML = "";
-        people = {};
-
-        for (const person of peopleNames) {
-            people[person] = { selected: false, canBeSpymaster: true};
-
-            let wrapper = document.createElement("div");
-            wrapper.classList.add("wrapper");
-
-            let canBeSpymaster = document.createElement("input");
-            canBeSpymaster.type = "checkbox";
-            canBeSpymaster.checked = true;
-            canBeSpymaster.disabled = true;
-            canBeSpymaster.onchange = function(){
-                people[person].canBeSpymaster = this.checked;
+Yochai`,
+                people: [],
+                seed: new Chance(chance.integer()),
+                favor: "Random",
+                randomFavorRed: chance.bool()
             }
-            let canBelabel = document.createElement("canBelabel");
-            canBelabel.innerText = "SM Pool"
-
-            let nameButton = document.createElement("button");
-            nameButton.innerText = person;
-            nameButton.onclick = function () {
-                this.classList.toggle("pressed");
-                people[person].selected = !people[person].selected;
-                canBeSpymaster.disabled = !people[person].selected;
-            };
-
-            wrapper.appendChild(nameButton);
-            wrapper.appendChild(canBeSpymaster);
-            wrapper.appendChild(canBelabel);
-            peopleDiv.appendChild(wrapper);
-        }
-    }
-    function shuffle(a) {
-        for (let i = a.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [a[i], a[j]] = [a[j], a[i]];
-        }
-        return a;
-    }
-
-    function makeTeams() {
-        var selectedPeopleRaw = []
-        for (const p in people) {
-            if (people[p].selected)
-                selectedPeopleRaw.push(p)
-        }
-        shuffle(selectedPeopleRaw);
-
-        const selectedPeople = [];
-        let redTeam = [];
-        let blueTeam = [];
-        for (const person of selectedPeopleRaw) {
-            if (people[person].canBeSpymaster)
-            {
-                if (redTeam.length == 0) 
+        },
+        watch: {
+            names: {
+                handler: function (newNames) {
+                    this.people = newNames.split("\n").map(p => { return { name: p, selected: false, canBeSpymaster: true } });
+                }, immediate: true
+            }
+        },
+        methods: {
+            reseed() {
+                this.seed = new Chance(chance.integer());
+                this.randomFavorRed = this.seed.bool();
+            },
+            redLen() {
+                const basicLen = this.shuffled.length / 2;
+                const extra = (this.shuffled.length % 2 == 1 && this.favor == "Red") ? 1 : 0;
+                return basicLen + extra;
+            },
+            getCorrectMod(color) {
+                let localFavor = this.favor;
+                if (localFavor == "Random")
                 {
-                    redTeam.push(person);
-                    continue;
+                    localFavor = this.randomFavorRed ? "Red" : "Blue";
                 }
-                else if (blueTeam.length == 0)
-                {
-                    blueTeam.push(person);
-                    continue;
+                return localFavor == color ? 0 : 1;
+            }
+        },
+        computed: {
+            selectedNames() {
+                return this.people.filter(x => x.selected);
+            },
+            shuffled() {
+                let shuffled = this.seed.shuffle(this.selectedNames);
+                return shuffled.sort((a,b) => b.canBeSpymaster - a.canBeSpymaster);
+            },
+            redTeam() {
+                return this.shuffled.filter((v, i) => i % 2 == this.getCorrectMod("Red"));
+            },
+            blueTeam() {
+                return this.shuffled.filter((v, i) => i % 2 == this.getCorrectMod("Blue"));
+            },
+            redSm() {
+                const sms = this.redTeam.filter(x => x.canBeSpymaster);
+                return sms.length > 0 ? chance.pickone(sms) : null;
+            },
+            blueSm() {
+                const sms = this.blueTeam.filter(x => x.canBeSpymaster);
+                return sms.length > 0 ? chance.pickone(sms) : null;
+            },
+            zippedTeams() {
+                const fillIn = {name: ""};
+                const zipped = this.redTeam.map((v, i) => [v, this.blueTeam[i] ?? fillIn]);
+                if (this.blueTeam.length > this.redTeam.length) {
+                    zipped.push([fillIn, this.blueTeam[this.redTeam.length]]);
                 }
+
+                return zipped ?? [];
             }
 
-            selectedPeople.push(person);
         }
-
-        teamSize = selectedPeople.length / 2;
-
-        if (teamSize != Math.floor(teamSize)) {
-            teamSize = Math.floor(teamSize);
-
-            //if there is an even number we don't always want the red team to be bigger
-            if (Math.random() > 0.5) {
-                teamSize += 1;
-            }
-        }
-
-        redTeam = redTeam.concat(selectedPeople.slice(0, teamSize));
-        blueTeam = blueTeam.concat(selectedPeople.slice(teamSize, selectedPeople.length));
-        const body = document.createElement("tbody");
-
-        for (let i = 0; i < selectedPeopleRaw.length / 2; i++) {
-            const row = body.insertRow(i);
-            const redCell = row.insertCell(0);
-            redCell.innerText = redTeam[i] ?? "";
-            redCell.classList.add("red");
-            const blueCell = row.insertCell(1);
-            blueCell.innerText = blueTeam[i] ?? "";
-            blueCell.classList.add("blue");
-
-            if (i == 0) {
-                const makeSpymaster = (t) => {
-                    t.innerText += " - Spymaster";
-                    t.classList.add("spymaster");
-                }
-                makeSpymaster(redCell);
-                makeSpymaster(blueCell);
-            }
-        }
-
-        var table = document.getElementById("table");
-        table.replaceChild(body, table.querySelector("tbody"));
     }
 
-    updateNames(); 
+    Vue.createApp(HelloVueApp).mount('#app')
 </script>
 
 </html>
