@@ -57,11 +57,11 @@
 <body>
     <div id=app>
     <h1>Codenames Team Chooser</h1>
-    <div v-for="person in people" class="wrapper">
-            <button @click="person.selected = !person.selected"
+    <div v-for="person in people" class="wrapper"  @click="person.selected = !person.selected">
+            <button
                 :class="{pressed: person.selected}">{{person.name}}</button>
             <input :name="person.name + 'isSm'" type="checkbox" v-model="person.canBeSpymaster"
-                :disabled="!person.selected">
+                :disabled="!person.selected" @click.stop>
             <label :for="person.name + 'isSm'">SM Pool</label>
     </div>
     <div>
