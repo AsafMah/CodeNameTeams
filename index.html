@@ -122,21 +122,10 @@ Yochai`,
             names: {
                 handler: function (newNames) {
                     const namesArr = newNames.split("\n");
-                    const oldNames = this.people.map(p => p.name);
                     const newPeople = [];
-                    
-                    //to get rid of the removed names
-                    for (const person of this.people) {
-                        const index = namesArr.indexOf(person.name);
-                        if (index != -1)
-                        {
-                            newPeople.push(person);
-                            namesArr.splice(index, 1);
-                        }
-                    }
 
                     for (const name of namesArr) {
-                        newPeople.push({ name: name, selected: false, canBeSpymaster: true });
+                        newPeople.push(this.people.find(p => p.name == name) ?? {name: name, selected: false, canBeSpymaster: true });
                     }
 
                     this.people = newPeople;
