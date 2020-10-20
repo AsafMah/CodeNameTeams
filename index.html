@@ -57,7 +57,7 @@
 <body>
     <div id=app>
     <h1>Codenames Team Chooser</h1>
-    <div v-for="person in people" class="wrapper"  @click="person.selected = !person.selected">
+    <div v-for="person in people" class="wrapper"  @click="person.selected = !person.selected" :key="person.name">
             <button
                 :class="{pressed: person.selected}">{{person.name}}</button>
             <input :name="person.name + 'isSm'" type="checkbox" v-model="person.canBeSpymaster"
@@ -121,7 +121,25 @@ Yochai`,
         watch: {
             names: {
                 handler: function (newNames) {
-                    this.people = newNames.split("\n").map(p => { return { name: p, selected: false, canBeSpymaster: true } });
+                    const namesArr = newNames.split("\n");
+                    const oldNames = this.people.map(p => p.name);
+                    const newPeople = [];
+                    
+                    //to get rid of the removed names
+                    for (const person of this.people) {
+                        const index = namesArr.indexOf(person.name);
+                        if (index != -1)
+                        {
+                            newPeople.push(person);
+                            namesArr.splice(index, 1);
+                        }
+                    }
+
+                    for (const name of namesArr) {
+                        newPeople.push({ name: name, selected: false, canBeSpymaster: true });
+                    }
+
+                    this.people = newPeople;
                 }, immediate: true
             }
         },
