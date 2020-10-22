@@ -20,6 +20,19 @@
             line-height: 1.2
         }
 
+        #names {
+            float: left;
+        }
+
+        #imagediv {
+            font-size: 12px;
+            float: left;
+        }
+
+        #imagediv button {
+            float: left;
+        }
+
         .pressed {
             background-color: yellowgreen;
         }
@@ -49,51 +62,65 @@
             margin: 3px;
             padding: 3px;
         }
+
+        #teams {
+            display: inline-block;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.0.1/vue.global.prod.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chance/1.1.7/chance.min.js"></script>
+    <script src="html2canvas.min.js"></script>
 </head>
 
 <body>
     <div id=app>
-    <h1>Codenames Team Chooser</h1>
-    <div v-for="person in people" class="wrapper"  @click="person.selected = !person.selected" :key="person.name">
-            <button
-                :class="{pressed: person.selected}">{{person.name}}</button>
+        <h1>Codenames Team Chooser</h1>
+        <div v-for="person in people" class="wrapper" @click="person.selected = !person.selected" :key="person.name">
+            <button :class="{pressed: person.selected}">{{person.name}}</button>
             <input :name="person.name + 'isSm'" type="checkbox" v-model="person.canBeSpymaster"
                 :disabled="!person.selected" @click.stop>
             <label :for="person.name + 'isSm'">SM Pool</label>
-    </div>
-    <div>
-        Favor:
-        <input type="radio" value="Random" v-model="favor" />
-        <label for="Random">Random</label>
-        <input type="radio" value="Red" v-model="favor" />
-        <label for="Red">Red</label>
-        <input type="radio" value="Blue" v-model="favor" />
-        <label for="Blue">Blue</label>
-    </div>
-    <div><button @click="reseed">Reshuffle Teams</button></div>
-    <div>
-        <table id="table">
-            <thead>
-                <th class="red">Red Team</th>
-                <th class="blue">Blue Team</th>
-            </thead>
-            <tbody>
-                <tr v-for="zip in zippedTeams">
-                    <td class=red :class="{spymaster: zip[0] == redSm}">{{zip[0].name}}<span v-if="zip[0] == redSm"> - SpyMaster</span></td>
-                    <td class=blue :class="{spymaster: zip[1] == blueSm}">{{zip[1].name}}<span v-if="zip[1] == blueSm"> - SpyMaster</span></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    <div>
-        <textarea v-model="names" rows=30>
+        </div>
+        <div>
+            Favor:
+            <input type="radio" value="Random" v-model="favor" />
+            <label for="Random">Random</label>
+            <input type="radio" value="Red" v-model="favor" />
+            <label for="Red">Red</label>
+            <input type="radio" value="Blue" v-model="favor" />
+            <label for="Blue">Blue</label>
+        </div>
+        <div><button @click="reseed">Reshuffle Teams</button></div>
+        <div id=teams>
+            <table>
+                <thead>
+                    <th class="red">Red Team</th>
+                    <th class="blue">Blue Team</th>
+                </thead>
+                <tbody>
+                    <tr v-for="(zip, index) in zippedTeams">
+                        <td class=red :class="{spymaster: zip[0].canBeSpymaster && index == 0}">{{zip[0].name}}<span v-if="zip[0].canBeSpymaster && index == 0">
+                                - SpyMaster</span></td>
+                        <td class=blue :class="{spymaster: zip[1].canBeSpymaster && index == 0}">{{zip[1].name}}<span
+                                v-if="zip[1].canBeSpymaster && index == 0"> - SpyMaster</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div>
+            <div id=names>
+                <textarea v-model="names" rows=30>
 
-        </textarea>
+            </textarea>
+            </div>
+            <div id=imagediv>
+                <button @click="copyImage">Copy Image</button> <span>{{copied}}</span>
+                <div id=image></div>
+            </div>
+        </div>
+
+
     </div>
-</div>
 </body>
 
 <script>
@@ -115,7 +142,9 @@ Yochai`,
                 people: [],
                 seed: new Chance(chance.integer()),
                 favor: "Random",
-                randomFavorRed: chance.bool()
+                randomFavorRed: chance.bool(),
+                html2canvas: html2canvas,
+                copied: ""
             }
         },
         watch: {
@@ -125,7 +154,7 @@ Yochai`,
                     const newPeople = [];
 
                     for (const name of namesArr) {
-                        newPeople.push(this.people.find(p => p.name == name) ?? {name: name, selected: false, canBeSpymaster: true });
+                        newPeople.push(this.people.find(p => p.name == name) ?? { name: name, selected: false, canBeSpymaster: true });
                     }
 
                     this.people = newPeople;
@@ -144,11 +173,25 @@ Yochai`,
             },
             getCorrectMod(color) {
                 let localFavor = this.favor;
-                if (localFavor == "Random")
-                {
+                if (localFavor == "Random") {
                     localFavor = this.randomFavorRed ? "Red" : "Blue";
                 }
                 return localFavor == color ? 0 : 1;
+            },
+            copyImage() {
+                let teams = document.getElementById("teams")
+                this.html2canvas(teams, {
+                    width: teams.offsetWidth + 10
+                }).then(canvas => {
+                    let image = document.getElementById("image");
+                    image.innerHTML = "";
+                    image.appendChild(canvas);
+                    canvas.toBlob(blob => {
+                        navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+                        this.copied = "Copied at " + new Date()
+                    })
+                }
+                );
             }
         },
         computed: {
@@ -158,7 +201,7 @@ Yochai`,
             shuffled() {
                 let shuffled = this.seed.shuffle(this.selectedNames);
                 this.randomFavorRed = this.seed.bool();
-                return shuffled.sort((a,b) => b.canBeSpymaster - a.canBeSpymaster);
+                return shuffled.sort((a, b) => b.canBeSpymaster - a.canBeSpymaster);
             },
             redTeam() {
                 return this.shuffled.filter((v, i) => i % 2 == this.getCorrectMod("Red"));
@@ -166,16 +209,8 @@ Yochai`,
             blueTeam() {
                 return this.shuffled.filter((v, i) => i % 2 == this.getCorrectMod("Blue"));
             },
-            redSm() {
-                const sms = this.redTeam.filter(x => x.canBeSpymaster);
-                return sms.length > 0 ? chance.pickone(sms) : null;
-            },
-            blueSm() {
-                const sms = this.blueTeam.filter(x => x.canBeSpymaster);
-                return sms.length > 0 ? chance.pickone(sms) : null;
-            },
             zippedTeams() {
-                const fillIn = {name: ""};
+                const fillIn = { name: "" };
                 const zipped = this.redTeam.map((v, i) => [v, this.blueTeam[i] ?? fillIn]);
                 if (this.blueTeam.length > this.redTeam.length) {
                     zipped.push([fillIn, this.blueTeam[this.redTeam.length]]);
